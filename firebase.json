@@ -1,9 +1,0 @@
-{
-  "apphosting": {
-    "deploy": {
-      "image": {
-        "dockerfile": "Dockerfile"
-      }
-    }
-  }
-}

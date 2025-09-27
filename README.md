@@ -69,6 +69,6 @@ pytest
 
 - Actualiza `.firebaserc` con el `projectId` de Firebase que ya tienes enlazado a GitHub.
 - Define las variables `SUPABASE_URL` y `SUPABASE_KEY` en la sección de *Environment variables* de Firebase App Hosting para que Cloud Run las tenga disponibles.
-- El archivo `firebase.json` apunta a la `Dockerfile` incluida en este repositorio. Firebase App Hosting construirá la imagen automáticamente en cada confirmación.
+- El archivo `firebase.json` apunta a la `Dockerfile` incluida en este repositorio y declara el contexto (`.`) junto con el `runConfig` (apphosting.yaml). Firebase App Hosting construirá la imagen automáticamente en cada confirmación.
 - La `Dockerfile` expone el servicio con Uvicorn en el puerto determinado por Cloud Run (`$PORT`). Si haces cambios en dependencias o comandos de arranque, actualiza este archivo.
 - Cuando Firebase termine el build podrás ver la versión desplegada desde App Hosting o promovida a producción según tu flujo de trabajo.
