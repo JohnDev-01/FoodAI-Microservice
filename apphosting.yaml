@@ -1,9 +1,12 @@
+build:
+  dockerfile: Dockerfile
+  context: .
 runConfig:
   minInstances: 0        # escala a cero (ahorro)
   maxInstances: 10
   cpu: 1
   memoryMiB: 512
   concurrency: 80
-env:
-  - variable: ENV
-    value: "prod"
+  env:
+    - variable: ENV
+      value: "prod"
