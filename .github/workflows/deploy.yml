@@ -2,7 +2,7 @@ name: Deploy FoodAI API to AWS Lambda
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -26,18 +26,16 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        id: build-image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
-      - name: Update Lambda to new image
+      - name: Update Lambda to new image (latest)
         run: |
-          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}"
+          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest"
           echo "Updating Lambda function ${{ secrets.LAMBDA_FUNCTION_NAME }} with image $IMAGE_URI"
           aws lambda update-function-code \
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}" \
@@ -45,6 +43,22 @@ jobs:
             --publish
           aws lambda wait function-updated \
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}"
+
+      - name: Keep only newest image in ECR (delete older digests)
+        run: |
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+          REG="${{ secrets.AWS_REGION }}"
+          # Lista digests de más nuevo a más viejo y elimina desde el segundo en adelante
+          DIGESTS=$(aws ecr describe-images --repository-name "$REPO" --region "$REG" \
+            --query 'reverse(sort_by(imageDetails,&imagePushedAt))[1:].[].imageDigest' --output text)
+          if [ -n "$DIGESTS" ]; then
+            for d in $DIGESTS; do
+              echo "Deleting $d"
+              aws ecr batch-delete-image --repository-name "$REPO" --region "$REG" --image-ids imageDigest=$d || true
+            done
+          else
+            echo "Only one image present. Nothing to delete."
+          fi
 
       - name: Show Function URL
         run: |
