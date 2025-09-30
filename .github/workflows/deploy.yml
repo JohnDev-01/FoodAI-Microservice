@@ -44,7 +44,28 @@ jobs:
           aws lambda wait function-updated \
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}"
 
-     
+      - name: Delete untagged images right away
+        run: |
+          REPO="${{ secrets.ECR_REPOSITORY }}"
+          REG="${{ secrets.AWS_REGION }}"
+
+          UNTAGS=$(aws ecr list-images \
+            --repository-name "$REPO" \
+            --region "$REG" \
+            --filter tagStatus=UNTAGGED \
+            --query 'imageIds[*]' \
+            --output json)
+
+          if [ "$UNTAGS" != "[]" ]; then
+            echo "Deleting untagged images..."
+            aws ecr batch-delete-image \
+              --repository-name "$REPO" \
+              --region "$REG" \
+              --image-ids "$UNTAGS"
+          else
+            echo "No untagged images to delete."
+          fi
+
 
       - name: Show Function URL
         run: |
