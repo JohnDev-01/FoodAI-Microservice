@@ -44,25 +44,7 @@ jobs:
           aws lambda wait function-updated \
             --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}"
 
-      - name: Keep only newest image in ECR (delete older digests)
-        run: |
-          REPO="${{ secrets.ECR_REPOSITORY }}"
-          REG="${{ secrets.AWS_REGION }}"
-
-          ALL_DIGESTS=$(aws ecr describe-images --repository-name "$REPO" --region "$REG" \
-            --query 'sort_by(imageDetails,&imagePushedAt)[*].imageDigest' --output text)
-
-          DIGESTS=$(echo "$ALL_DIGESTS" | tac | tail -n +2)
-
-          if [ -n "$DIGESTS" ]; then
-            for d in $DIGESTS; do
-              echo "Deleting $d"
-              aws ecr batch-delete-image --repository-name "$REPO" --region "$REG" --image-ids imageDigest=$d || true
-            done
-          else
-            echo "Only one image present. Nothing to delete."
-          fi
-
+     
 
       - name: Show Function URL
         run: |
