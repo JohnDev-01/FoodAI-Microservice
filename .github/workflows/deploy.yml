@@ -48,9 +48,12 @@ jobs:
         run: |
           REPO="${{ secrets.ECR_REPOSITORY }}"
           REG="${{ secrets.AWS_REGION }}"
-          # Lista digests de más nuevo a más viejo y elimina desde el segundo en adelante
-          DIGESTS=$(aws ecr describe-images --repository-name "$REPO" --region "$REG" \
-            --query 'reverse(sort_by(imageDetails,&imagePushedAt))[1:].[].imageDigest' --output text)
+
+          ALL_DIGESTS=$(aws ecr describe-images --repository-name "$REPO" --region "$REG" \
+            --query 'sort_by(imageDetails,&imagePushedAt)[*].imageDigest' --output text)
+
+          DIGESTS=$(echo "$ALL_DIGESTS" | tac | tail -n +2)
+
           if [ -n "$DIGESTS" ]; then
             for d in $DIGESTS; do
               echo "Deleting $d"
@@ -59,6 +62,7 @@ jobs:
           else
             echo "Only one image present. Nothing to delete."
           fi
+
 
       - name: Show Function URL
         run: |
