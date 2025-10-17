@@ -1,7 +1,19 @@
-# 🧠 FoodAI FastAPI
+# 📘 Documentación de API — FoodAI FastAPI
 
-Servicio API construido con **FastAPI** y **Mangum**, diseñado para exponer endpoints de salud, predicción de demanda y análisis inteligente de reservaciones de restaurantes.  
-Está preparado para ejecutarse localmente con **Uvicorn** o desplegarse como **función Lambda en AWS** mediante contenedores.
+> **Base URL de producción:**  
+> `https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1`
+
+---
+
+## 🔹 Información general
+
+Esta API está construida con **FastAPI** y conectada a **Supabase** para analizar reservaciones de restaurantes mediante **Inteligencia Artificial (IA)**.  
+Permite:
+- Entrenar un modelo con datos históricos  
+- Predecir si una reserva será confirmada o cancelada  
+- Recomendar restaurantes y horarios populares  
+- Obtener análisis agregados, como el restaurante más reservado  
+
 
 ---
 
@@ -58,88 +70,150 @@ cp .env.example .env
 
 ---
 
-## 📁 Estructura del proyecto
+## ⚙️ Endpoints disponibles
 
-```text
-app/
-├── api/
-│   └── v1/
-│       ├── routes_health.py          # Endpoints de salud
-│       ├── routes_predict.py         # Predicción de demanda
-│       ├── routes_predict_ai.py      # IA: predicción y recomendación
-│       └── routes_analytics.py       # Análisis y reportes
-├── services/
-│   ├── predictor.py                  # Lógica de predicción clásica
-│   ├── ai_service.py                 # Lógica de IA con Supabase
-│   └── supabase_service.py           # Conexión y consultas a Supabase
-├── models/
-│   └── predict.py                    # Modelos Pydantic
-└── main.py                           # Inicialización FastAPI + Mangum
-```
+| Grupo | Método | Endpoint | Descripción |
+|--------|---------|-----------|--------------|
+| **IA** | `POST` | `/ia/entrenar` | Entrena el modelo de IA con los datos actuales |
+| **IA** | `GET` | `/ia/predecir` | Predice el estado probable de una nueva reservación |
+| **IA** | `GET` | `/ia/recomendar` | Sugiere los mejores restaurantes y horarios |
+| **Análisis** | `GET` | `/analisis/restaurante-mas-reservado` | Devuelve el restaurante con más reservaciones |
+| **Análisis** | `GET` | `/analisis/resumen` | Devuelve estadísticas generales del sistema |
 
 ---
 
-## ▶️ Ejecución local
+## 🧠 Endpoints de Inteligencia Artificial
 
+### 1️⃣ POST `/ia/entrenar`
+
+**Descripción:**  
+Entrena el modelo de IA utilizando las reservaciones existentes en la base de datos Supabase.  
+Crea y guarda los modelos en el servidor (`RandomForestClassifier` y codificadores `LabelEncoder`).
+
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/entrenar
+```
+
+**Método:** `POST`
+
+**Ejemplo de solicitud:**
 ```bash
-uvicorn app.main:app --reload
-```
-API disponible en: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-
----
-
-## 📖 Documentación interactiva
-
-FastAPI expone dos interfaces:
-- Swagger UI → [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- ReDoc → [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
-
----
-
-## ⚡ Endpoints Principales
-
-### 🔹 GET `/api/v1/health`
-Verifica el estado general del servicio.
-
-### 🔹 GET `/api/v1/ok`
-Confirma que el servidor FastAPI está operativo.
-
-### 🔹 POST `/api/v1/predict`
-Predice demanda de clientes según día, temperatura y feriado.
-
-**Ejemplo:**
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/predict"   -H "Content-Type: application/json"   -d '{"day_of_week": 4, "is_holiday": false, "temperature_c": 22.5}'
+curl -X POST "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/entrenar"
 ```
 
-**Respuesta:**
+**Respuesta exitosa:**
 ```json
-{"demand": 92.25}
+{
+  "mensaje": "Modelo entrenado correctamente",
+  "precision": 88.5,
+  "fecha": "2025-10-18T00:15:04.123Z"
+}
+```
+
+**Posibles errores:**
+```json
+{"error": "Ocurrió un error al entrenar el modelo: No hay datos válidos"}
 ```
 
 ---
 
-## 🤖 Endpoints de Inteligencia Artificial
+### 2️⃣ GET `/ia/predecir`
 
-### 🔹 POST `/api/v1/ia/entrenar`
-Entrena el modelo de IA con las reservaciones actuales.
+**Descripción:**  
+Predice el estado probable de una reservación según los parámetros proporcionados.
 
-### 🔹 GET `/api/v1/ia/predecir`
-Predice el estado de una reservación.
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/predecir
+```
 
-### 🔹 GET `/api/v1/ia/recomendar`
-Recomienda los restaurantes y horarios más exitosos.
+**Método:** `GET`
+
+**Parámetros:**
+
+| Nombre | Tipo | Obligatorio | Descripción |
+|--------|------|-------------|--------------|
+| `restaurant_id` | string | ✅ | ID del restaurante |
+| `invitados` | int | ✅ | Número de personas |
+| `hora` | int | ✅ | Hora de la reservación (0–23) |
+| `dia_semana` | int | ✅ | Día de la semana (0=Lunes, 6=Domingo) |
+
+**Ejemplo de solicitud:**
+```bash
+curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/predecir?restaurant_id=2cbb0ee2-d9c9-4986-a32e-b4326ad2abb5&invitados=4&hora=20&dia_semana=5"
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "estado_estimado": "confirmada",
+  "confianza": 0.94,
+  "hora": 20,
+  "dia_semana": 5
+}
+```
+
+**Errores posibles:**
+```json
+{"error": "Ocurrió un error al predecir: Modelo no encontrado"}
+```
 
 ---
 
-## 📊 Endpoint de Análisis
+### 3️⃣ GET `/ia/recomendar`
 
-### 🔹 GET `/api/v1/analisis/restaurante-mas-reservado`
-Devuelve el restaurante con más reservaciones, su nombre, tipo de cocina y ciudad.
+**Descripción:**  
+Genera recomendaciones de restaurantes y horarios más populares basados en reservaciones confirmadas o completadas.
 
-**Ejemplo:**
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/recomendar
+```
+
+**Método:** `GET`
+
+**Parámetros opcionales:**
+
+| Nombre | Tipo | Descripción |
+|--------|------|--------------|
+| `top_n` | int | Cantidad de resultados deseados (por defecto = 3) |
+
+**Ejemplo de solicitud:**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/v1/analisis/restaurante-mas-reservado"
+curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/ia/recomendar?top_n=3"
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "mensaje": "Recomendaciones generadas correctamente",
+  "mejor_hora_general": 19,
+  "sugerencias": [
+    {"restaurante": "El Buen Sabor", "hora_recomendada": 20, "reservas_exitosas": 45},
+    {"restaurante": "La Parrillada", "hora_recomendada": 19, "reservas_exitosas": 39},
+    {"restaurante": "Pasta & Vino", "hora_recomendada": 21, "reservas_exitosas": 25}
+  ]
+}
+```
+
+---
+
+## 📊 Endpoints de Análisis
+
+### 4️⃣ GET `/analisis/restaurante-mas-reservado`
+
+**Descripción:**  
+Devuelve el restaurante con más reservaciones registradas en el sistema, junto a sus datos básicos.
+
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/analisis/restaurante-mas-reservado
+```
+
+**Ejemplo de solicitud:**
+```bash
+curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/analisis/restaurante-mas-reservado"
 ```
 
 **Respuesta:**
@@ -153,3 +227,44 @@ curl -X GET "http://127.0.0.1:8000/api/v1/analisis/restaurante-mas-reservado"
   "total_reservaciones": 56
 }
 ```
+
+---
+
+### 5️⃣ GET `/analisis/resumen`
+
+**Descripción:**  
+Devuelve un resumen general de todas las reservaciones en el sistema, incluyendo totales y estados.
+
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/analisis/resumen
+```
+
+**Ejemplo de solicitud:**
+```bash
+curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/analisis/resumen"
+```
+
+**Respuesta:**
+```json
+{
+  "total_reservaciones": 150,
+  "confirmadas": 97,
+  "canceladas": 25,
+  "pendientes": 18,
+  "completadas": 10
+}
+```
+
+---
+
+## 🧪 Recomendación de uso
+
+1️⃣ Entrenar el modelo con `/ia/entrenar`  
+2️⃣ Predecir reservas con `/ia/predecir`  
+3️⃣ Obtener recomendaciones con `/ia/recomendar`  
+4️⃣ Analizar resultados con `/analisis/*`
+
+---
+
+📬 **Soporte:** Para reportar errores o solicitar mejoras, abre un *issue* en el repositorio de GitHub.
