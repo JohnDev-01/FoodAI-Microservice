@@ -11,7 +11,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",  # tu frontend local
-        "https://foodai-online.web.app/", # dominio de producción
+        "https://foodai-online.web.app", # dominio de producción
     ],
     allow_credentials=True,
     allow_methods=["*"],
