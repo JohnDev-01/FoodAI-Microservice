@@ -3,9 +3,10 @@ uvicorn[standard]
 python-dotenv
 pydantic-settings
 supabase
-pandas==2.2.3
-numpy==1.26.4
-scikit-learn==1.4.2
+pandas
+numpy
+scikit-learn
+joblib
 mangum
 httpx
 email-validator

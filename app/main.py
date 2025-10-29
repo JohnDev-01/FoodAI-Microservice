@@ -4,6 +4,7 @@ from app.api.v1 import routes_analytics, routes_predict_ai
 from mangum import Mangum
 from app.api.v1.routes_health import router as health_router
 from app.api.v1.routes_email import router as email_router
+from app.api.v1.routes_reservations_update import router as reservations_update_router
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(email_router, prefix="/api/v1")
+app.include_router(reservations_update_router, prefix="/api/v1")
 app.include_router(routes_analytics.router, prefix="/api/v1")
 app.include_router(routes_predict_ai.router, prefix="/api/v1")
 
