@@ -118,6 +118,7 @@ class RestaurantAIInsightsService:
             work["reservation_date"].str.strip() + " " + work["reservation_time"].str.strip(),
             errors="coerce",
         )
+        work["reservation_datetime"] = work["reservation_datetime"].dt.tz_localize(None)
         work = work.dropna(subset=["reservation_datetime"])
 
         work["weekday"] = work["reservation_datetime"].dt.weekday
@@ -140,6 +141,8 @@ class RestaurantAIInsightsService:
         fallback_lead = np.where(work["status"] == "pending", 1.5, 2.8)
         if created_series is None:
             created_series = work["reservation_datetime"] - pd.to_timedelta(fallback_lead, unit="D")
+        else:
+            created_series = created_series.dt.tz_localize(None)
 
         work["lead_time_days"] = (
             (work["reservation_datetime"] - created_series).dt.total_seconds() / 86400
