@@ -79,6 +79,7 @@ cp .env.example .env
 | **IA** | `GET` | `/ia/recomendar` | Sugiere los mejores restaurantes y horarios |
 | **Análisis** | `GET` | `/analisis/restaurante-mas-reservado` | Devuelve el restaurante con más reservaciones |
 | **Análisis** | `GET` | `/analisis/resumen` | Devuelve estadísticas generales del sistema |
+| **Insights** | `GET` | `/restaurants/{restaurant_id}/ai-insights` | Indicadores predictivos completos para un restaurante |
 
 ---
 
@@ -264,6 +265,48 @@ curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aw
 2️⃣ Predecir reservas con `/ia/predecir`  
 3️⃣ Obtener recomendaciones con `/ia/recomendar`  
 4️⃣ Analizar resultados con `/analisis/*`
+
+---
+
+## 🔮 GET `/restaurants/{restaurant_id}/ai-insights`
+
+**Descripción:**
+Entrega en una sola respuesta todos los indicadores predictivos solicitados para un restaurante específico. La API genera insights de demanda, ocupación, cancelaciones, comportamiento de clientes, economía, segmentación, operaciones y estacionalidad usando modelos ligeros (regresiones, suavizados exponenciales y clustering) montados con pandas/scikit-learn.
+
+**URL completa:**
+```
+https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/restaurants/{restaurant_id}/ai-insights
+```
+
+**Ejemplo de solicitud:**
+```bash
+curl -X GET "https://eqv7ecjeolvi7q5ijpiu7zbaam0npwwf.lambda-url.us-east-1.on.aws/api/v1/restaurants/2cbb0ee2-d9c9-4986-a32e-b4326ad2abb5/ai-insights"
+```
+
+**Fragmento de respuesta:**
+```json
+{
+  "restaurant_id": "2cbb0ee2-d9c9-4986-a32e-b4326ad2abb5",
+  "generated_at": "2024-06-01T14:25:08.120Z",
+  "indicators": {
+    "demand_capacity": {
+      "next_peak": {
+        "datetime": "2024-06-08T20:00:00",
+        "insight": "Se espera el próximo pico el sábado 08/06 a las 08:00 PM con 94 % de ocupación."
+      },
+      "weekday_demand": ["..."],
+      "hourly_occupancy": ["..."]
+    },
+    "cancellations": {
+      "cancellation_risk_by_reservation": ["..."],
+      "users_prone_to_cancel": ["..."],
+      "loyal_customers_forecast": {"expected_next_month": 45}
+    }
+  }
+}
+```
+
+Cada bloque de indicadores incluye los ejemplos solicitados en el brief (pico de reservas, ocupación por hora, demanda semanal, probabilidades de cancelación, clientes fieles esperados, ticket promedio, alertas operativas, estacionalidad, etc.).
 
 ---
 

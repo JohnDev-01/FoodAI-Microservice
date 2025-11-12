@@ -136,7 +136,7 @@ async def reschedule_reservation(
             "reservation_date": reschedule_data.reservation_date,
             "reservation_time": reschedule_data.reservation_time,
             "updated_at": datetime.now().isoformat(),
-            "modification_reason": reschedule_data.reason,
+            "modification_reason": reschedule_data.reason, 
             "last_modified_date": reservation_data["reservation_date"],
             "last_modified_time": reservation_data["reservation_time"]
         }
