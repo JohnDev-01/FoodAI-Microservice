@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from urllib import response
 
 import numpy as np
 import pandas as pd
@@ -66,14 +67,21 @@ class RestaurantAIInsightsService:
     # Carga y preparación de datos
     # ------------------------------------------------------------------
     def _fetch_reservations(self, restaurant_id: str) -> pd.DataFrame:
-        response = (
+       response = (
             self.supabase.client.table("reservations")
             .select("*")
             .eq("restaurant_id", restaurant_id)
-            .execute()
-        )
-        data = response.data or []
-        return pd.DataFrame(data)
+           .execute()
+       )
+       data = response.data or []
+       df = pd.DataFrame(data)
+
+       # 🔧 Versión global: eliminar zona horaria de todas las columnas datetime
+       for col in df.select_dtypes(include=["datetimetz"]).columns:
+        df[col] = df[col].dt.tz_convert(None)
+
+       return df
+
 
     def _build_restaurant_context(self, df: pd.DataFrame, restaurant_id: str) -> RestaurantContext:
         restaurant = (
@@ -84,10 +92,18 @@ class RestaurantAIInsightsService:
             .execute()
         ).data or {}
 
+        # 🔧 Si algún campo del restaurante llega como tz-aware datetime, limpiarlo
+        if isinstance(restaurant, dict):
+            for key, value in restaurant.items():
+                if isinstance(value, pd.Timestamp) and value.tzinfo is not None:
+                    restaurant[key] = value.tz_convert(None)
+
         avg_ticket = self._infer_average_ticket(df, restaurant)
         capacity = self._infer_capacity(df, restaurant)
 
         return RestaurantContext(restaurant=restaurant, capacity=capacity, avg_ticket=avg_ticket)
+
+
 
     def _prepare_dataframe(self, df: pd.DataFrame, avg_ticket: float) -> pd.DataFrame:
         work = df.copy()
